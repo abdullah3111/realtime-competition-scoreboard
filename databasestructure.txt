@@ -1,0 +1,186 @@
+CREATE TABLE IF NOT EXISTS teams (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    team_name VARCHAR(100) NOT NULL,
+    color_code VARCHAR(7) DEFAULT '#FF6600',
+    logo_url VARCHAR(500),
+    total_score INT DEFAULT 0,
+    -- Round 1 scores
+    round1_correct INT DEFAULT 0,
+    round1_incorrect INT DEFAULT 0,
+    round1_score INT DEFAULT 0,
+    -- Round 2 scores
+    round2_correct INT DEFAULT 0,
+    round2_incorrect INT DEFAULT 0,
+    round2_score INT DEFAULT 0,
+    -- Round 3 scores
+    round3_correct INT DEFAULT 0,
+    round3_incorrect INT DEFAULT 0,
+    round3_score INT DEFAULT 0,
+    -- Round 4 scores
+    round4_correct INT DEFAULT 0,
+    round4_incorrect INT DEFAULT 0,
+    round4_score INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_team_name (team_name)
+);
+CREATE TABLE IF NOT EXISTS score_updates (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    team_id INT,
+    points INT NOT NULL,
+    reason VARCHAR(200),
+    multiplier DECIMAL(3,2) DEFAULT 1.00,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES teams(id)
+);
+CREATE TABLE IF NOT EXISTS live_events (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    event_type ENUM('goal', 'penalty', 'bonus', 'timeout'),
+    team_id INT,
+    description TEXT,
+    points_change INT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE IF NOT EXISTS system_control (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    control_key VARCHAR(50) UNIQUE,
+    control_value TEXT,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO system_control (control_key, control_value) 
+VALUES ('random_score_interval', '30')
+ON DUPLICATE KEY UPDATE control_value = '30';
+
+CREATE TABLE IF NOT EXISTS vs_displays (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    team1_id INT,
+    team2_id INT,
+    team1_name VARCHAR(100),
+    team2_name VARCHAR(100),
+    team1_color VARCHAR(20),
+    team2_color VARCHAR(20),
+    team1_logo TEXT,
+    team2_logo TEXT,
+    mode VARCHAR(50),
+    message TEXT,
+    duration INT DEFAULT 5,
+    team1_score INT DEFAULT 0,
+    team2_score INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT 1,
+    shown_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_active (is_active, shown_at)
+);
+CREATE TABLE IF NOT EXISTS admin_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    action VARCHAR(100) NOT NULL,
+    details TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS vs_displays (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    team1_id INT NOT NULL,
+    team2_id INT NOT NULL,
+    team1_name VARCHAR(100) NOT NULL,
+    team2_name VARCHAR(100) NOT NULL,
+    team1_color VARCHAR(20) DEFAULT '#ff6600',
+    team2_color VARCHAR(20) DEFAULT '#0066ff',
+    team1_logo TEXT,
+    team2_logo TEXT,
+    team1_score INT DEFAULT 0,
+    team2_score INT DEFAULT 0,
+    message TEXT,
+    duration INT DEFAULT 7,
+    mode VARCHAR(50) DEFAULT 'head_to_head',
+    is_active BOOLEAN DEFAULT 1,
+    shown_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_active (is_active, shown_at),
+    INDEX idx_created (created_at)
+);
+
+CREATE TABLE IF NOT EXISTS admin_commands (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    command VARCHAR(50) NOT NULL,
+    details TEXT,
+    executed BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_command (command, executed, created_at)
+);
+   CREATE TABLE IF NOT EXISTS teams (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        team_name VARCHAR(100) NOT NULL,
+        color_code VARCHAR(7) DEFAULT '#FF6600',
+        logo_url VARCHAR(500),
+        total_score INT DEFAULT 0,
+        round1_correct INT DEFAULT 0,
+        round1_incorrect INT DEFAULT 0,
+        round1_score INT DEFAULT 0,
+        round2_correct INT DEFAULT 0,
+        round2_incorrect INT DEFAULT 0,
+        round2_score INT DEFAULT 0,
+        round3_correct INT DEFAULT 0,
+        round3_incorrect INT DEFAULT 0,
+        round3_score INT DEFAULT 0,
+        round4_correct INT DEFAULT 0,
+        round4_incorrect INT DEFAULT 0,
+        round4_score INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS question_logs (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        round_number INT,
+        question_number INT,
+        team_id INT,
+        is_correct BOOLEAN,
+        points INT,
+        added_by VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_round_question (round_number, question_number),
+        FOREIGN KEY (team_id) REFERENCES teams(id)
+    );
+CREATE TABLE IF NOT EXISTS rounds (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    round_name VARCHAR(100),
+    round_number INT UNIQUE,
+    points_per_correct INT DEFAULT 10,
+    points_per_incorrect INT DEFAULT -5,
+    total_questions INT,
+    current_question INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT false,
+    start_time DATETIME,
+    end_time DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ;
+INSERT IGNORE INTO rounds (round_name, round_number, points_per_correct, points_per_incorrect, total_questions) VALUES
+    ('Round 1: General Knowledge', 1, 10, 0, 20),
+    ('Round 2: Brain Booster', 2, 15, -3, 20),
+    ('Round 3: Buzzer Round', 3, 20, -5, 20),
+    ('Round 4: Rapid Fire', 4, 5, 0, 50);
+
+CREATE TABLE IF NOT EXISTS timers (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    timer_name VARCHAR(100),
+    duration_seconds INT,
+    remaining_seconds INT,
+    is_active BOOLEAN DEFAULT false,
+    start_time DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS display_controls (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    control_type VARCHAR(50) NOT NULL,
+    control_value VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insert initial record
+INSERT INTO display_controls (control_type, control_value, is_active) 
+VALUES ('round_display', NULL, FALSE)
+ON DUPLICATE KEY UPDATE control_value = VALUES(control_value);
